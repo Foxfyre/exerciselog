@@ -91,7 +91,7 @@ app.post("/api/exercise/:new-user", function(req, res) {
 app.post("/api/exercise/add", function(req, res) {
   console.log(req.body);
   const userId = req.body.userId;
-  const date = (req.body.date) ? new Date(req.body.date) : new Date();
+  const date = (req.body.date) ? (new Date(req.body.date)) : (new Date());
   
   user.findByIdAndUpdate(userId,
     {$push: {entry: {
@@ -112,24 +112,39 @@ app.post("/api/exercise/add", function(req, res) {
 app.get('/api/exercise/log',(req,res) => {
   const userId = req.query.userId;
   const limit = parseInt(req.query.limit);
-  const to = new Date(req.query.to);
-  const from = new Date(req.query.from);
-  console.log(to);
+  const to = (req.query.to) ? new Date(req.query.to) : new Date();
+  const from = (req.query.to) ? new Date(req.query.to) : new Date("1970-01-01");
+  let entries = [];
+  
+  console.log(typeof(to));
   console.log(from);
   
-  user.find({
-    _id: userId,
-    entry: { 
-      exerDate: {
-        $gt: from,
-        $lt: to
-    }}
+  user.findById({
+    _id: userId
   })
-    .exec(function(err,data) {
+  .exec(function(err,data) {
+    
+  entries = data.entry;
+    if (from !== undefined && to !== undefined) {
+      entries = data.entry.filter(e => e.exerDate >= from && e.exerDate <= to); 
+    } else if (from !== undefined && to === undefined) {
+      entries = data.entry.filter(e => e.exerDate >= from);
+    } else if (from === undefined && to !== undefined) {
+      entries = data.entry.filter(e => e.exerDate <= to);
+    }
+    let limitEntries
+    if (limit != undefined) {
+      limitEntries = entries.slice(0,limit);
+    } else {
+      limitEntries = entries;
+    }
+    
+    
+      console.log(entries);
       //console.log(data.entry[0].exerDate < from);
       console.log(err);
-      console.log(data);
-      res.json(data);
+      //console.log(data);
+      res.json(limitEntries);
     })
 });
 
